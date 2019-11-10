@@ -1,12 +1,14 @@
-use ggez::conf;
-use ggez::event::{self, EventHandler};
-use ggez::graphics;
-use ggez::{Context, ContextBuilder, GameResult};
+use ggez::{
+    conf,
+    event::{self, EventHandler},
+    graphics::{self, DrawParam, Image},
+    Context, ContextBuilder, GameResult,
+};
 
-use std::path;
+use std::path::PathBuf;
 
-const SCREEN_WIDTH: f32 = 800f32;
-const SCREEN_HEIGHT: f32 = 600f32;
+const SCREEN_WIDTH: f32 = 600f32;
+const SCREEN_HEIGHT: f32 = 800f32;
 
 fn main() -> GameResult {
     // Make a Context and an EventLoop.
@@ -14,34 +16,47 @@ fn main() -> GameResult {
         ContextBuilder::new("spacing all them invaders", "a author")
             .window_setup(conf::WindowSetup::default().title("Spac Invader"))
             .window_mode(conf::WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
-            .add_resource_path(path::PathBuf::from("./assets"))
+            .add_resource_path(PathBuf::from("./assets"))
             .build()?;
 
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut my_game = MyGame::new(ctx);
+    let mut state = State::new(ctx)?;
 
     // Run!
-    match event::run(ctx, event_loop, &mut my_game) {
+    match event::run(ctx, event_loop, &mut state) {
         Ok(_) => println!("Exited cleanly."),
         Err(e) => println!("Error occured: {}", e),
     }
     Ok(())
 }
 
-struct MyGame {
-    // Your state here...
+struct DrawableImage {
+    image: Image,
+    draw_param: DrawParam,
 }
 
-impl MyGame {
-    pub fn new(_ctx: &mut Context) -> MyGame {
-        // Load/create resources here: images, fonts, sounds, etc.
-        MyGame {}
+struct State {
+    static_background: DrawableImage,
+}
+
+impl State {
+    pub fn new(ctx: &mut Context) -> GameResult<State> {
+        let state = State {
+            static_background: DrawableImage {
+                image: Image::new(
+                    ctx,
+                    format!("/background_{}_{}.png", SCREEN_WIDTH, SCREEN_HEIGHT),
+                )?,
+                draw_param: DrawParam::default(),
+            },
+        };
+        Ok(state)
     }
 }
 
-impl EventHandler for MyGame {
+impl EventHandler for State {
     fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
         // Update code here...
         Ok(())
@@ -51,6 +66,11 @@ impl EventHandler for MyGame {
         graphics::clear(ctx, graphics::WHITE);
 
         // Draw code here...
+        graphics::draw(
+            ctx,
+            &self.static_background.image,
+            self.static_background.draw_param,
+        )?;
 
         graphics::present(ctx)
     }
